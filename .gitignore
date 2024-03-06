@@ -246,3 +246,6 @@ _Pvt_Extensions
 # C
 **/.vscode
 **/*.exe
+
+# build
+**/build/**
