@@ -3,7 +3,6 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include <iostream>
 #include <fstream>
 #include <vector>
 #include <thread>
@@ -14,6 +13,8 @@
 #include <filesystem>
 #include <chrono>
 #include <future>
+#include <math.h>
+#include <conio.h>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ using namespace std;
 
 void sleepSort(const string& word) {
     this_thread::sleep_for(chrono::milliseconds(word.length() * 100)); // Adjust multiplier for sleep time
-    cout << word << endl;
+    std::cout << word << endl;
 }
 
 void task6() {
@@ -76,7 +77,7 @@ void copyDir(const string& src, const string& dst) {
     for (const auto& file : files) {
         string newSrc = src + "\\" + file.filename().string();
         string newDst = dst + "\\" + file.filename().string();
-        cout << "Copying file " << endl << "From: " << newSrc << endl << "To: " << newDst << endl;
+        std::cout << "Copying file " << endl << "From: " << newSrc << endl << "To: " << newDst << endl;
         fileFutures.push_back(async(launch::async, copyFile, newSrc, newDst));
     }
 
@@ -84,7 +85,7 @@ void copyDir(const string& src, const string& dst) {
     for (const auto& directory : directories) {
         string newSrc = src + "\\" + directory.filename().string();
         string newDst = dst + "\\" + directory.filename().string();
-        cout << "Copying directory " << endl << "From: " << newSrc << endl << "To: " << newDst << endl;
+        std::cout << "Copying directory " << endl << "From: " << newSrc << endl << "To: " << newDst << endl;
         dirFutures.push_back(async(launch::async, copyDir, newSrc, newDst));
     }
 
@@ -97,20 +98,71 @@ void copyDir(const string& src, const string& dst) {
 }
 
 int task7() {
-    cout << "\n\n_________start__________\n\n";
+    std::cout << "\n\n_________start__________\n\n";
     string src = "C:\\Users\\botak\\Desktop\\ncfu\\semester 6\\Многопоточка\\task7";
     string dst = "C:\\Users\\botak\\Desktop\\ncfu\\semester 6\\Многопоточка\\task7-copy";
 
     thread t(copyDir, src, dst);
     t.join();
 
-    cout << "\n\n_______________end_______________\n\n";
+    std::cout << "\n\n_______________end_______________\n\n";
 
     return 0;
 }
 
 // -------------TASK 8------------------------
 
+long double calculate_pi_portion(int start, int end) {
+    long double sum = 0;
+    for (int i = start; i <= end; i++) {
+        sum += ((pow(-1, i)) / (2 * i + 1));
+    }
+    return sum;
+}
+
+void task8Single() {
+	long double pi = 0;
+    for (int i = 0; i < 1000000000; i++) {
+        pi += ((pow(-1, i)) / (2 * i + 1));
+    }
+    pi *= 4;
+    cout << setprecision(10) << pi << endl;
+}
+
+void task8Multi() {
+    const int NUM_THREADS = 14;
+    int iterations_per_thread = 1000000000 / NUM_THREADS;
+	long double pi = 0;
+    // Create a vector to store futures
+    std::vector<std::future<long double>> futures(NUM_THREADS);
+    // Launch threads and store their futures
+    for (int i = 0; i < NUM_THREADS; i++) {
+        int start = i * iterations_per_thread;
+        int end = (i == NUM_THREADS - 1) ? 1000000000 - 1 : start + iterations_per_thread - 1;
+        futures[i] = std::async(std::launch::async, calculate_pi_portion, start, end);
+    }
+    // Wait for all threads to finish and accumulate results
+    for (auto& future : futures) {
+        long double result = future.get();
+        pi = pi + result;
+    }
+
+    pi = pi * 4;
+
+    std::cout << setprecision(10) << pi << endl;
+}
+
+void task8() {
+    auto start = chrono::high_resolution_clock::now();
+
+    // task8Single();
+    task8Multi();
+    
+    // ________PRINT EXECUTE TIME________
+    auto end = chrono::high_resolution_clock::now();
+    auto ms_int = chrono::duration_cast<chrono::milliseconds>(end - start);
+    std::cout << ms_int.count() << " ms\n";
+}
 
 int main(int argc, char* argv[])
 {
@@ -119,6 +171,7 @@ int main(int argc, char* argv[])
 
     // task6();
     // task7();
+    // task8();
 
     return 0;
 }
