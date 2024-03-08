@@ -15,6 +15,7 @@
 #include <future>
 #include <math.h>
 #include <conio.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -164,6 +165,55 @@ void task8() {
     std::cout << ms_int.count() << " ms\n";
 }
 
+// -------------TASK 9------------------------
+
+
+
+long double calculate_pi_slice(const int THREAD_NUMBER, const int NUM_THREADS, bool* isFinishedExecuting) {
+    long double sum = 0;
+    long long n = THREAD_NUMBER; 
+    for (long long i = 0; true; n += NUM_THREADS, i++) {
+        sum += ((pow(-1, n)) / (2 * n + 1));
+
+        if (i % 1000000000 == 0 && *isFinishedExecuting == true) {
+            break;
+        }
+    }
+
+    return sum;
+}
+
+bool* isFinishedExecuting = new bool(false);
+
+void cancel_program(int num) {
+    cout << "Cancllation started!!!!!!!!!!" << endl;
+	*isFinishedExecuting = true;
+}
+
+void task9() {
+    signal(SIGINT, cancel_program);
+    const int NUM_THREADS = 14;
+	long double pi = 0;
+    // Create a vector to store futures
+    std::vector<std::future<long double>> futures(NUM_THREADS);
+
+    // Launch threads and store their futures
+    for (int i = 0; i < NUM_THREADS; i++) {
+        futures[i] = std::async(std::launch::async, calculate_pi_slice, i, NUM_THREADS, isFinishedExecuting);
+    }
+
+    // Wait for all threads to finish and accumulate results
+    for (auto& future : futures) {
+        long double result = future.get();
+        pi = pi + result;
+    }
+
+    pi = pi * 4;
+
+    std::cout << setprecision(10) << pi << endl;
+    delete isFinishedExecuting;
+}
+
 int main(int argc, char* argv[])
 {
     SetConsoleCP(1251);
@@ -172,6 +222,10 @@ int main(int argc, char* argv[])
     // task6();
     // task7();
     // task8();
+    task9();
+    
+    string a;
+    cin >> a;
 
     return 0;
 }
