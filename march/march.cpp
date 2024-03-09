@@ -396,6 +396,50 @@ void task13() {
     task13.run();
 }
 
+// -------------TASK 14------------------------
+
+#include <semaphore>
+
+// Семафоры
+binary_semaphore sem_first(1);
+binary_semaphore sem_second(0);
+
+void thread_first() {
+    for (int i = 0; i < 10; i++) {
+        // Ждем, пока освободится первый семафор
+        sem_first.acquire();
+
+        // Выводим сообщение
+        cout << "Первый поток" << endl;
+
+        // Сигнализируем второму потоку
+        sem_second.release();
+    }
+}
+
+void thread_second() {
+    for (int i = 0; i < 10; i++) {
+        // Ждем, пока освободится второй семафор
+        sem_second.acquire();
+
+        // Выводим сообщение
+        cout << "Второй поток" << endl;
+
+        // Сигнализируем первому потоку
+        sem_first.release();
+    }
+}
+
+void task14() {
+    // Запускаем два потока
+    thread t1(thread_first);
+    thread t2(thread_second);
+
+    // Ждем завершения потоков
+    t1.join();
+    t2.join();
+}
+
 int main(int argc, char* argv[])
 {
     SetConsoleCP(1251);
@@ -408,6 +452,7 @@ int main(int argc, char* argv[])
     // task10();
     // task11();
     // task13();
+    task14();
     
     return 0;
 }
