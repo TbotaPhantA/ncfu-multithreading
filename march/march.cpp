@@ -167,8 +167,6 @@ void task8() {
 
 // -------------TASK 9------------------------
 
-
-
 long double calculate_pi_slice(const int THREAD_NUMBER, const int NUM_THREADS, bool* isFinishedExecuting) {
     long double sum = 0;
     long long n = THREAD_NUMBER; 
@@ -214,6 +212,49 @@ void task9() {
     delete isFinishedExecuting;
 }
 
+// -------------TASK 10------------------------
+
+void task10() {
+    const int number_of_philosophers = 20;
+
+    struct Forks
+    {
+    public:
+        Forks() { ; }
+        std::mutex mu;
+    };
+
+    auto eat = [](Forks& left_fork, Forks& right_fork, int philosopher_number) {
+        std::unique_lock<std::mutex> llock(left_fork.mu);
+        std::unique_lock<std::mutex> rlock(right_fork.mu);
+
+        cout << "Философ " << philosopher_number << " ест..." << endl;
+
+        std::chrono::milliseconds timeout(1500);
+        std::this_thread::sleep_for(timeout);
+
+        cout << "Философ " << philosopher_number << " закончил есть и думает..." << endl;
+    };
+
+    // Создаём вилки и философов
+    Forks forks[number_of_philosophers];
+    std::thread philosopher[number_of_philosophers];
+
+    // Философы начитают думать
+    for (int i = 0; i < number_of_philosophers; ++i) {
+        auto philosopher_number = i + 1;
+        cout << "Филосов " << philosopher_number << " думает.." << endl;
+        auto previous_fork_index = (number_of_philosophers + (i - 1)) % number_of_philosophers;
+        philosopher[i] = std::thread(eat, std::ref(forks[i]), std::ref(forks[previous_fork_index]), philosopher_number);
+    }
+
+    for (auto& ph : philosopher) {
+        ph.join();
+    }
+}
+
+// -------------TASK 11------------------------
+
 int main(int argc, char* argv[])
 {
     SetConsoleCP(1251);
@@ -222,10 +263,8 @@ int main(int argc, char* argv[])
     // task6();
     // task7();
     // task8();
-    task9();
+    // task9();
+    // task10();
     
-    string a;
-    cin >> a;
-
     return 0;
 }
