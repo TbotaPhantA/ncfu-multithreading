@@ -264,7 +264,7 @@ class Task11 {
     mutex mutex_lock;
     condition_variable cv;
 public:
-    Task11(int thread_count): thread_count(thread_count) {
+    Task11(int thread_count) : thread_count(thread_count) {
         thread_id = 0;
         allowed_thread = 0;
     }
@@ -281,7 +281,6 @@ public:
     void run() {
         for (int i = 0; i < thread_count; i++) {
             thread t(&Task11::print_thread, this);
-            cout << "Thread " << t.get_id() << " is " << i << endl;
             thread_ids.push_back(t.get_id());
             threads.push_back(move(t));
         }
@@ -300,7 +299,6 @@ public:
     void print_thread() {
         for (int i = 0; i < 10; i++) {
             waitforallthreadinit();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             unique_lock<mutex> lock(mutex_lock);
             // Ждёт, пока условие == false
             cv.wait(lock, [this] { return std::this_thread::get_id() == thread_ids[allowed_thread]; });
@@ -333,6 +331,71 @@ void task11() {
 
 // -------------TASK 13------------------------
 
+class Task13 {
+    int thread_count;
+    vector<thread> threads;
+    vector<std::thread::id> thread_ids;
+    int thread_id;
+    int allowed_thread;
+    mutex mutex_lock;
+    condition_variable cv;
+public:
+    Task13(int thread_count) : thread_count(thread_count) {
+        thread_id = 0;
+        allowed_thread = 0;
+    }
+
+    int getCurrentThreadId(const std::thread::id& id) {
+        int thread_id = 0;
+        for (auto& e : thread_ids) {
+            if (e == id) return thread_id;
+            thread_id++;
+        }
+        return -1;
+    }
+
+    void run() {
+        for (int i = 0; i < thread_count; i++) {
+            thread t(&Task13::print_thread, this);
+            thread_ids.push_back(t.get_id());
+            threads.push_back(move(t));
+        }
+
+        for (int i = 0; i < thread_count; i++) {
+            threads[i].join();
+        }
+    }
+
+    void waitforallthreadinit() {
+        while (1) {
+            if (thread_count == thread_ids.size()) return;
+        }
+    }
+
+    void print_thread() {
+        for (int i = 0; i < 10; i++) {
+            waitforallthreadinit();
+            unique_lock<mutex> lock(mutex_lock);
+            // Ждёт, пока условие == false
+            cv.wait(lock, [this] { return std::this_thread::get_id() == thread_ids[allowed_thread]; });
+            print_chars();
+            allowed_thread += 1;
+            if (allowed_thread == thread_count) allowed_thread = 0;
+            lock.unlock();
+            cv.notify_all();
+        }
+    }
+
+    void print_chars() {
+        cout << std::this_thread::get_id() << ": Printing some text..." << endl;
+    }
+};
+
+void task13() {
+    Task13 task13(2);
+    task13.run();
+}
+
 int main(int argc, char* argv[])
 {
     SetConsoleCP(1251);
@@ -343,7 +406,8 @@ int main(int argc, char* argv[])
     // task8();
     // task9();
     // task10();
-    task11();
+    // task11();
+    // task13();
     
     return 0;
 }
