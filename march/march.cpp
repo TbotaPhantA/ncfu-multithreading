@@ -313,7 +313,7 @@ public:
     }
 
     void print_chars() {
-        cout << allowed_thread << ": Printing some text..." << endl;
+        cout << std::this_thread::get_id() << ": Printing some text..." << endl;
     }
 };
 
@@ -322,6 +322,16 @@ void task11() {
     task11.run();
 }
 
+// -------------TASK 12------------------------
+
+/*
+	Прооблемы с 2-мя мьютексами заключаются в том, что 2 мьютекса могут быть получены в разном порядке
+	таким образом может возникнуть DEADLOCK. Также 2 мьютекса не харантируют, в каком порядке потоки получат
+	доступ к секции кода. 
+*/
+
+
+// -------------TASK 13------------------------
 
 int main(int argc, char* argv[])
 {
@@ -333,7 +343,7 @@ int main(int argc, char* argv[])
     // task8();
     // task9();
     // task10();
-    // task11();
+    task11();
     
     return 0;
 }
