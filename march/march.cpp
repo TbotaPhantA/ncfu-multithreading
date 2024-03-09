@@ -450,6 +450,78 @@ void task14() {
 
 // -------------TASK 16------------------------
 
+//#include <iostream>
+//#include <unistd.h>
+//#include <sys/wait.h>
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <fcntl.h>
+//
+//using namespace std;
+//
+//int main() {
+//    // Create a pipe 1.
+//    int pipefd1[2]; // child -> parent
+//    if (pipe(pipefd1) == -1) {
+//        perror("pipe");
+//        exit(1);
+//    }
+//
+//    // Create a pipe 2.
+//    int pipefd2[2]; // parent -> child
+//    if (pipe(pipefd2) == -1) {
+//        perror("pipe");
+//        exit(1);
+//    }
+//
+//    // Fork a child process.
+//    pid_t pid = fork();
+//    if (pid == -1) {
+//        perror("fork");
+//        exit(1);
+//    }
+//
+//    // In the parent process, write to the pipe.
+//    if (pid != 0) {
+//        // Parent process
+//        for (int i = 0; i < 10; i++) {
+//            // Write a message to the pipe.
+//            string message = "first semaphore acquired!";
+//            write(pipefd2[1], message.c_str(), message.length());
+//
+//            cout << "Process 1" << endl;
+//            // Wait for the child process to respond.
+//            char buffer[1024];
+//            read(pipefd1[0], buffer, sizeof(buffer));
+//        }
+//    }
+//    else {
+//        // Child process
+//        for (int i = 0; i < 10; i++) {
+//            // Read a message from the pipe.
+//            char buffer[1024];
+//            read(pipefd2[0], buffer, sizeof(buffer));
+//
+//            cout << "Process 2" << endl;
+//
+//            // Write a message to the pipe.
+//            string message = "second semaphore acquired!";
+//            write(pipefd1[1], message.c_str(), message.length());
+//        }
+//    }
+//
+//    // Close the pipes.
+//    close(pipefd1[0]);
+//    close(pipefd1[1]);
+//    close(pipefd2[0]);
+//    close(pipefd2[1]);
+//
+//    // Wait for the child process to exit.
+//    wait(NULL);
+//
+//    return 0;
+//}
+
 
 int main(int argc, char* argv[])
 {
