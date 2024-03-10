@@ -623,6 +623,121 @@ void task17() {
 
 // -------------TASK 18------------------------
 
+#include <iostream>
+#include <list>
+#include <mutex>
+#include <thread>
+
+using namespace std;
+
+class ThreadSafeListPerMutex {
+public:
+    // Default constructor (empty list)
+    ThreadSafeListPerMutex() {}
+
+    // Parameterized constructor (initializes with elements)
+    ThreadSafeListPerMutex(const std::initializer_list<std::string>& elements) {
+        for (auto element : elements) {
+            add(element);  // Use add() to ensure mutex creation
+        }
+    }
+
+    ThreadSafeListPerMutex(const ThreadSafeListPerMutex& other) {
+        // Iterate through the source list and create deep copies with new mutexes
+        for (const auto& entry : other.data_) {
+            data_.push_back({ entry.string });
+        }
+    }
+
+    // Thread-safe bubble sort implementation (using data_mutex_)
+    void sort() {
+        std::lock_guard<std::mutex> lock(data_mutex_);  // Acquire lock for sorting
+
+        bool swapped;
+        do {
+            swapped = false;
+            auto it = data_.begin();
+            auto next = std::next(it);
+            for (; next != data_.end(); ++it, ++next) {
+                if (it->string > next->string) {
+                    // Swap strings while holding the lock
+                    std::swap(it->string, next->string);
+                    swapped = true;
+                }
+            }
+        } while (swapped);
+    }
+
+
+    // Thread-safe size getter (avoids unnecessary locking)
+    size_t size() {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        return data_.size();
+    }
+
+    // Thread-safe print method
+    void print() {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        for (const auto& element : data_) {
+            std::cout << element.string << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // Thread-safe method to add a new element
+    void add(std::string element) {
+        std::lock_guard<std::mutex> lock(data_mutex_);  // Protect list modification
+        data_.push_back({ element });      // Create entry with a new mutex
+    }
+
+    struct StringEntry {
+        std::string string;
+        std::mutex mutex;
+
+        StringEntry(const std::string& element) : string(element), mutex(std::mutex{}) {}
+        StringEntry(const StringEntry& other) : string(other.string), mutex(std::mutex{}) {}
+    };
+
+    std::list<StringEntry> data_;
+    std::mutex data_mutex_;
+};
+
+void task18sortPeriodically(ThreadSafeListPerMutex* list) {
+    for (int i = 0; i < 5; i++) {
+        this_thread::sleep_for(10s);
+        cout << "Sorting list..." << endl;
+        list->sort();
+        list->print();
+    }
+}
+
+void task18launchUserInput(ThreadSafeListPerMutex* list) {
+    string line;
+    for (int i = 0; i < 20; i++) {
+        getline(cin, line);
+        if (line.empty()) {
+            list->print();
+            continue;
+        }
+        else {
+            list->add(line);
+        }
+    }
+}
+
+void task18() {
+    ThreadSafeListPerMutex* list = new ThreadSafeListPerMutex();
+
+    thread listenToUserThread(task18launchUserInput, list);
+    thread sortingThread(task18sortPeriodically, list);
+
+    listenToUserThread.join();
+    sortingThread.join();
+
+    delete list;
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -637,7 +752,8 @@ int main(int argc, char* argv[])
     // task11();
     // task13();
     // task14();
-    task17();
+    // task17();
+    task18();
     
     return 0;
 }
