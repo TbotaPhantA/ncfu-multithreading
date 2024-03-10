@@ -522,6 +522,107 @@ void task14() {
 //    return 0;
 //}
 
+// -------------TASK 17------------------------
+
+#include <iostream>
+#include <list>
+#include <mutex>
+#include <thread>
+
+using namespace std;
+
+class ThreadSafeList {
+public:
+    // Default constructor (empty list)
+    ThreadSafeList() {}
+
+    // Parameterized constructor (initializes with elements)
+    ThreadSafeList(const std::initializer_list<string>& elements) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto element : elements) {
+            data_.push_back(element);
+        }
+    }
+
+    // Thread-safe bubble sort implementation
+    void sort() {
+        std::lock_guard<std::mutex> lock(mutex_);  // Acquire lock before modifications
+
+        bool swapped;
+        do {
+            swapped = false;
+            auto it = data_.begin();
+            auto next = std::next(it);
+            for (; next != data_.end(); ++it, ++next) {
+                if (*it > *next) {
+                    std::swap(*it, *next);
+                    swapped = true;
+                }
+            }
+        } while (swapped);
+    }
+
+    // Thread-safe size getter (avoids unnecessary locking)
+    size_t size() {
+        std::lock_guard<std::mutex> lock(mutex_); 
+        return data_.size();
+    }
+
+    // Thread-safe print method
+    void print() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (const auto& element : data_) {
+            std::cout << element << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // Thread-safe method to add a new element
+    void add(const std::string& element) {
+        std::lock_guard<std::mutex> lock(mutex_);  // Acquire lock before modification
+        data_.push_back(element);
+    }
+private:
+    std::list<std::string> data_;
+    std::mutex mutex_;
+};
+
+void sortPeriodically(ThreadSafeList* list) {
+    for (int i = 0; i < 5; i++) {
+        this_thread::sleep_for(10s);
+        cout << "Sorting list..." << endl;
+        list->sort();
+        list->print();
+    }
+}
+
+void launchUserInput(ThreadSafeList* list) {
+    string line;
+    for (int i = 0; i < 20; i++) {
+        getline(cin, line);
+        if (line.empty()) {
+            list->print();
+            continue;
+        } else {
+            list->add(line);
+        }
+    }
+}
+
+void task17() {
+    ThreadSafeList* list = new ThreadSafeList();
+
+    thread listenToUserThread(launchUserInput, list);
+    thread sortingThread(sortPeriodically, list);
+
+    listenToUserThread.join();
+    sortingThread.join();
+
+    delete list;
+}
+
+// -------------TASK 18------------------------
+
 
 int main(int argc, char* argv[])
 {
@@ -535,7 +636,8 @@ int main(int argc, char* argv[])
     // task10();
     // task11();
     // task13();
-    task14();
+    // task14();
+    task17();
     
     return 0;
 }
