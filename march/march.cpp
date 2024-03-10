@@ -651,19 +651,21 @@ public:
 
     // Thread-safe bubble sort implementation (using data_mutex_)
     void sort() {
-        std::lock_guard<std::mutex> lock(data_mutex_);  // Acquire lock for sorting
-
         bool swapped;
         do {
             swapped = false;
             auto it = data_.begin();
             auto next = std::next(it);
             for (; next != data_.end(); ++it, ++next) {
+                it->mutex.lock();
+                next->mutex.lock();
                 if (it->string > next->string) {
                     // Swap strings while holding the lock
                     std::swap(it->string, next->string);
                     swapped = true;
                 }
+                it->mutex.unlock();
+                next->mutex.unlock();
             }
         } while (swapped);
     }
@@ -737,7 +739,11 @@ void task18() {
     delete list;
 }
 
+// -------------TASK 19------------------------
 
+void task19() {
+    cout << "task 19" << endl;
+}
 
 int main(int argc, char* argv[])
 {
@@ -754,6 +760,7 @@ int main(int argc, char* argv[])
     // task14();
     // task17();
     task18();
+    // task19();
     
     return 0;
 }
