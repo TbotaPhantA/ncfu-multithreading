@@ -982,6 +982,8 @@ void task20() {
 
 // -------------TASK 21------------------------
 // The difference between shared_lock and unique_lock is...
+// Use of std::shared_mutex: This mutex allows multiple readers to access the data concurrently, but only one writer at a time.
+
 
 class ThreadSafeListTask21 {
 public:
@@ -1090,6 +1092,11 @@ void task21() {
     delete list;
 }
 
+// -------------TASK 22------------------------
+
+void task22() {
+    cout << "task 22" << endl;
+}
 
 
 int main(int argc, char* argv[])
@@ -1109,7 +1116,8 @@ int main(int argc, char* argv[])
     // task18();
     // task19();
     // task20();
-    task21();
+    // task21();
+    task22();
     
     return 0;
 }
