@@ -980,6 +980,117 @@ void task20() {
 }
 
 
+// -------------TASK 21------------------------
+// The difference between shared_lock and unique_lock is...
+
+class ThreadSafeListTask21 {
+public:
+    // Default constructor (empty list)
+    ThreadSafeListTask21() {}
+
+    // Parameterized constructor (initializes with elements)
+    ThreadSafeListTask21(const std::initializer_list<std::string>& elements) {
+        for (auto element : elements) {
+            add(element);  // Use add() to ensure mutex creation
+        }
+    }
+
+    // Thread-safe bubble sort implementation (using data_mutex_ for write access)
+    void sort() {
+        bool swapped;
+        do {
+            swapped = false;
+            auto it = data_.begin();
+            auto next = std::next(it);
+            for (; next != data_.end(); ++it, ++next) {
+                // Acquire shared locks for read access
+                std::shared_lock<std::shared_mutex> rlock1(it->mutex);
+                std::shared_lock<std::shared_mutex> rlock2(next->mutex);
+
+				this_thread::sleep_for(1s);
+                if (it->string > next->string) {
+                    // Acquire a write lock to modify the strings
+                    std::unique_lock<std::shared_mutex> wlock(data_mutex_);
+					cout << "Swaping " << it->string << " and " << next->string << endl;
+                    std::swap(it->string, next->string);
+                    swapped = true;
+                }
+                else {
+					cout << "Keeping " << it->string << " and " << next->string << endl;
+                }
+            }
+        } while (swapped);
+    }
+
+    // Thread-safe size getter (uses a shared lock for read access)
+    size_t size() {
+        std::shared_lock<std::shared_mutex> lock(data_mutex_);
+        return data_.size();
+    }
+
+    // Thread-safe print method (uses a shared lock for read access)
+    void print() {
+        std::shared_lock<std::shared_mutex> lock(data_mutex_);
+        for (const auto& element : data_) {
+            std::cout << element.string << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // Thread-safe method to add a new element (uses a write lock for modification)
+    void add(std::string element) {
+        std::unique_lock<std::shared_mutex> lock(data_mutex_);  // Protect list modification
+        data_.push_back({ element });  // Create entry with a new mutex
+    }
+
+    struct StringEntry {
+        std::string string;
+        std::shared_mutex mutex;  // Using shared mutex for individual entries
+
+        StringEntry(const std::string& element) : string(element) {}
+        StringEntry(const StringEntry& other) : string(other.string) {}
+    };
+
+    std::list<StringEntry> data_;
+    std::shared_mutex data_mutex_;  // Using a shared mutex for overall list operations
+};
+
+void task21sortPeriodically(ThreadSafeListTask21* list) {
+    for (int i = 0; i < 5; i++) {
+        this_thread::sleep_for(10s);
+        cout << "Sorting list..." << endl;
+        list->sort();
+        list->print();
+    }
+}
+
+void task21launchUserInput(ThreadSafeListTask21* list) {
+    string line;
+    for (int i = 0; i < 20; i++) {
+        getline(cin, line);
+        if (line.empty()) {
+            list->print();
+            continue;
+        }
+        else {
+            list->add(line);
+        }
+    }
+}
+
+void task21() {
+    ThreadSafeListTask21* list = new ThreadSafeListTask21();
+
+    thread listenToUserThread(task21launchUserInput, list);
+    thread sortingThread(task21sortPeriodically, list);
+
+    listenToUserThread.join();
+    sortingThread.join();
+
+    delete list;
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -997,7 +1108,8 @@ int main(int argc, char* argv[])
     // task17();
     // task18();
     // task19();
-    task20();
+    // task20();
+    task21();
     
     return 0;
 }
