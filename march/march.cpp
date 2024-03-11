@@ -1094,10 +1094,61 @@ void task21() {
 
 // -------------TASK 22------------------------
 
-void task22() {
-    cout << "task 22" << endl;
-}
+#include <condition_variable>
 
+void task22() {
+    const int number_of_philosophers = 20;
+
+    struct Forks {
+    public:
+        Forks() : is_left_available(true), is_right_available(true) {}
+        std::mutex mu;
+        std::condition_variable left_cond, right_cond;
+        bool is_left_available;
+        bool is_right_available;
+    };
+
+    auto eat = [](Forks& left_fork, Forks& right_fork, int philosopher_number) {
+        std::unique_lock<std::mutex> lock(left_fork.mu);
+
+        left_fork.left_cond.wait(lock, [&] { return left_fork.is_left_available; });
+
+        int right_fork_index = (number_of_philosophers + (philosopher_number - 1)) % number_of_philosophers;
+        {
+            std::unique_lock<std::mutex> right_lock(right_fork.mu);
+			right_fork.left_cond.wait(lock, [&] { return right_fork.is_right_available; });
+
+            cout << "Философ " << philosopher_number << " ест..." << endl;
+
+            std::chrono::milliseconds timeout(1500);
+            std::this_thread::sleep_for(timeout);
+
+            cout << "Философ " << philosopher_number << " закончил есть и думает..." << endl;
+
+            left_fork.is_left_available = true;
+            left_fork.left_cond.notify_one();  // Notify the waiting philosopher for the left fork
+
+            right_fork.is_right_available = true;
+            right_fork.right_cond.notify_one(); // Notify the waiting philosopher for the right fork
+        }
+    };
+
+    // Create forks and philosophers
+    Forks forks[number_of_philosophers];
+    std::thread philosopher[number_of_philosophers];
+
+    // Philosophers start thinking
+    for (int i = 0; i < number_of_philosophers; ++i) {
+        auto philosopher_number = i + 1;
+        cout << "Философ " << philosopher_number << " думает.." << endl;
+        int previous_fork_index = (number_of_philosophers + (i - 1)) % number_of_philosophers;
+        philosopher[i] = std::thread(eat, std::ref(forks[i]), std::ref(forks[previous_fork_index]), philosopher_number);
+    }
+
+    for (auto& ph : philosopher) {
+        ph.join();
+    }
+}
 
 int main(int argc, char* argv[])
 {
