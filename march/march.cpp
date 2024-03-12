@@ -1152,7 +1152,58 @@ void task22() {
 
 // -------------TASK 23------------------------
 
+int word_count = 5;
 
+void printSortedWords(vector<string>* sortedWords) {
+    cout << "SortedWords: ";
+    for (auto& word : (*sortedWords)) {
+        std::cout << word << ", ";
+    }
+    cout << endl;
+}
+
+void waitforallthreadinit(vector<thread::id>* thread_ids) {
+    while (1) {
+        if (word_count == (*thread_ids).size()) return;
+    }
+}
+
+void sleepSortTask23(const string& word, vector<string>* sortedWords, vector<thread::id>* thread_ids) {
+    thread_ids->push_back(this_thread::get_id());
+    waitforallthreadinit(thread_ids);
+    this_thread::sleep_for(chrono::milliseconds(word.length() * 100));
+    (*sortedWords).push_back(word);
+}
+
+void task23() {
+    vector<string> words;
+
+    // Читаем пользовательский ввод
+    for (int i = 0; i < word_count; i++) {
+        string word;
+        cin >> word;
+        words.push_back(word);
+    }
+
+    vector<string>* sortedWords = new vector<string>();
+
+    // Создаём кладём потоки для сортировки
+    vector<thread> threads;
+    vector<thread::id>* thread_ids = new vector<thread::id>();
+    for (const string& word : words) {
+        threads.emplace_back(sleepSortTask23, word, sortedWords, thread_ids);
+    }
+
+    // Ждём, пока все потоки закончат выполняться
+    for (thread& th : threads) {
+        th.join();
+    }
+
+    cout << "FINAL REUSLT:" << endl;
+    printSortedWords(sortedWords);
+
+    delete sortedWords;
+}
 
 // -------------TASK 24------------------------
 
@@ -1271,7 +1322,8 @@ int main(int argc, char* argv[])
     // task20();
     // task21();
     // task22();
-    task24();
+    task23();
+    // task24();
 
     
     return 0;
