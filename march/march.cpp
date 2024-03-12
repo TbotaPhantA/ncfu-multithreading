@@ -1150,6 +1150,108 @@ void task22() {
     }
 }
 
+// -------------TASK 23------------------------
+
+
+
+// -------------TASK 24------------------------
+
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+using namespace std;
+
+mutex mtxA;
+mutex mtxB;
+mutex mtxC;
+mutex mtxBolt;
+condition_variable cv;
+
+int A_count = 0;
+int B_count = 0;
+int C_count = 0;
+
+const int MAX_PRODUCTS = 10; // Максимальное количество произведенных винтиков
+
+struct Bolt {
+    bool isAReady;
+    bool isBReady;
+    bool isCReady;
+    bool isProduced;
+};
+
+vector<Bolt>* initBoltsVector() {
+	vector<Bolt>* bolts = new vector<Bolt>();
+    for (int i = 0; i < MAX_PRODUCTS; i++) {
+        (*bolts).push_back({ false, false, false, false });
+    }
+    return bolts;
+}
+
+void makeA(vector<Bolt>* bolts) {
+    for (int i = 0; i < MAX_PRODUCTS; ++i) {
+        unique_lock<mutex> lck(mtxA);
+        this_thread::sleep_for(chrono::seconds(1));
+        A_count++;
+        (*bolts)[i].isAReady = true;
+        cout << "Деталь A изготовлена. Всего произведено: " << A_count << endl;
+        cv.notify_all();
+    }
+}
+
+void makeB(vector<Bolt>* bolts) {
+    for (int i = 0; i < MAX_PRODUCTS; ++i) {
+        unique_lock<mutex> lck(mtxB);
+        this_thread::sleep_for(chrono::seconds(2));
+        B_count++;
+        (*bolts)[i].isBReady = true;
+        cout << "Деталь B изготовлена. Всего произведено: " << B_count << endl;
+        cv.notify_all();
+    }
+}
+
+void makeC(vector<Bolt>* bolts) {
+    for (int i = 0; i < MAX_PRODUCTS; ++i) {
+		unique_lock<mutex> lck(mtxC);
+		this_thread::sleep_for(chrono::seconds(3));
+		C_count++;
+        (*bolts)[i].isCReady = true;
+		cout << "Деталь C изготовлена. Всего произведено: " << C_count << endl;
+		cv.notify_all();
+    }
+}
+
+void makeBolt(vector<Bolt>* bolts) {
+	for (auto& bolt : (*bolts)) {
+		unique_lock<mutex> lck(mtxBolt);
+        cv.wait(lck, [&] {
+            bool result = !(bolt.isAReady && bolt.isBReady && bolt.isCReady) && !bolt.isProduced;
+            return !result;
+		});
+        bolt.isProduced = true;
+        cout << "Винтик готов!" << endl;
+	}
+}
+
+void task24() {
+    thread threadA, threadB, threadC, boltThread;
+    vector<Bolt>* boltsVector = initBoltsVector();
+
+	threadA = thread(makeA, boltsVector);
+	threadB = thread(makeB, boltsVector);
+	threadC = thread(makeC, boltsVector);
+	boltThread = thread(makeBolt, boltsVector);
+
+	threadA.join();
+	threadB.join();
+	threadC.join();
+    boltThread.join();
+
+    delete boltsVector;
+}
+
 int main(int argc, char* argv[])
 {
     SetConsoleCP(1251);
@@ -1168,7 +1270,9 @@ int main(int argc, char* argv[])
     // task19();
     // task20();
     // task21();
-    task22();
+    // task22();
+    task24();
+
     
     return 0;
 }
