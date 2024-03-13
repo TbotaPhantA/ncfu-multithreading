@@ -1303,6 +1303,106 @@ void task24() {
     delete boltsVector;
 }
 
+// --------------- TASK 25 -------------------
+#include <queue>
+
+void beautifulPrint(string str) {
+    lock_guard<mutex> lock(mutex());
+    cout << str;
+    cout.flush();
+    this_thread::sleep_for(chrono::nanoseconds(10));
+}
+
+class ThreadSafeQueue {
+    queue<string> queue;
+    int MAX_SIZE = 5;
+    mutex put_mtx;
+    mutex pop_mtx;
+    binary_semaphore semaphore_empty{ 0 };
+    binary_semaphore semaphore_full{ 1 };
+    bool isDropped = false;
+
+public:
+    void mymsgput(string s) {
+        lock_guard<mutex> lock(put_mtx);
+        if (isDropped) return;
+        semaphore_full.acquire();
+        if (isDropped) return;
+        queue.push(s);
+
+        semaphore_empty.release();
+        if (queue.size() < MAX_SIZE) {
+			semaphore_full.release();
+        }
+
+        beautifulPrint(s + " is pushed...\n");
+    }
+
+    string mymsgget() {
+        lock_guard<mutex> lock(pop_mtx);
+        if (isDropped) return "0";
+        semaphore_empty.acquire();
+        if (isDropped) return "0";
+        string front = queue.front();
+        queue.pop();
+
+        semaphore_full.release();
+        if (queue.size() > 0) {
+            semaphore_empty.release();
+        }
+
+        beautifulPrint(front + " is popped...\n");
+        return front;
+    }
+
+    void mymsqdrop() {
+        isDropped = true;
+		semaphore_empty.release();
+		semaphore_full.release();
+    }
+};
+
+void threadProducer(ThreadSafeQueue* q) {
+    for (int i = 0; i < 4; i++) {
+        stringstream thread_id;
+        thread_id << this_thread::get_id();
+        q->mymsgput("input: " + thread_id.str() + '_' + to_string(i));
+    }
+}
+
+void threadConsumer(ThreadSafeQueue* q) {
+    this_thread::sleep_for(chrono::seconds(4));
+    for (int i = 0; i < 4; i++) {
+        stringstream thread_id;
+        thread_id << this_thread::get_id();
+        string popped = q->mymsgget();
+    }
+}
+
+void dropQueue(ThreadSafeQueue* q) {
+    this_thread::sleep_for(chrono::seconds(2));
+    q->mymsqdrop();
+}
+
+void task25() {
+    ThreadSafeQueue* q = new ThreadSafeQueue();
+
+    thread t1(threadProducer, q);
+    thread t2(threadProducer, q);
+    thread t3(threadConsumer, q);
+    thread t4(threadConsumer, q);
+    // thread t5(dropQueue, q);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    // t5.join();
+
+    delete q;
+}
+
+
 int main(int argc, char* argv[])
 {
     SetConsoleCP(1251);
@@ -1322,8 +1422,9 @@ int main(int argc, char* argv[])
     // task20();
     // task21();
     // task22();
-    task23();
+    // task23();
     // task24();
+    task25();
 
     
     return 0;
