@@ -1402,6 +1402,93 @@ void task25() {
     delete q;
 }
 
+// --------------- TASK 26 -------------------
+
+class ThreadSafeQueueTask26 {
+public:
+    std::queue<std::string> queue;
+    int MAX_SIZE = 5;
+    std::mutex mtx;  // Single mutex for both conditions
+    std::condition_variable not_empty;
+    std::condition_variable not_full;
+    bool isDropped = false;
+
+public:
+    void mymsgput(std::string s) {
+        std::unique_lock<std::mutex> lock(mtx);
+        if (isDropped) return;
+        not_full.wait(lock, [this] { return queue.size() < MAX_SIZE || isDropped; });
+        if (isDropped) return;
+
+        queue.push(s);
+        not_empty.notify_one();  // Signal waiting consumers
+
+        beautifulPrint(s + " is pushed...\n");
+    }
+
+    std::string mymsgget() {
+        std::unique_lock<std::mutex> lock(mtx);
+        if (isDropped) return "0";
+        not_empty.wait(lock, [this] { return !queue.empty() || isDropped; });
+        if (isDropped) return "0";
+
+        std::string front = queue.front();
+        queue.pop();
+
+        not_full.notify_one();  // Signal waiting producers
+
+        beautifulPrint(front + " is popped...\n");
+        return front;
+    }
+
+    void mymsqdrop() {
+        std::lock_guard<std::mutex> lock(mtx);
+        isDropped = true;
+        not_empty.notify_all();  // Wake up any waiting consumers
+        not_full.notify_all();   // Wake up any waiting producers
+    }
+};
+
+void threadProducerTask26(ThreadSafeQueueTask26* q) {
+    for (int i = 0; i < 4; i++) {
+        stringstream thread_id;
+        thread_id << this_thread::get_id();
+        q->mymsgput("input: " + thread_id.str() + '_' + to_string(i));
+    }
+}
+
+void threadConsumerTask26(ThreadSafeQueueTask26* q) {
+    this_thread::sleep_for(chrono::seconds(4));
+    for (int i = 0; i < 4; i++) {
+        stringstream thread_id;
+        thread_id << this_thread::get_id();
+        string popped = q->mymsgget();
+    }
+}
+
+void dropQueueTask26(ThreadSafeQueueTask26* q) {
+    this_thread::sleep_for(chrono::seconds(2));
+    q->mymsqdrop();
+}
+
+void task26() {
+    ThreadSafeQueueTask26* q = new ThreadSafeQueueTask26();
+
+    thread t1(threadProducerTask26, q);
+    thread t2(threadProducerTask26, q);
+    thread t3(threadConsumerTask26, q);
+    thread t4(threadConsumerTask26, q);
+    thread t5(dropQueueTask26, q);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    t5.join();
+
+    delete q;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -1424,7 +1511,8 @@ int main(int argc, char* argv[])
     // task22();
     // task23();
     // task24();
-    task25();
+    // task25();
+    task26();
 
     
     return 0;
