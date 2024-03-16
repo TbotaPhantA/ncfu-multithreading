@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,7 +13,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
   // Forward request to origin server
-  originResponse, err := http.Get("http://localhost:8080" + r.URL.Path)
+	originResponse, err := http.Get("http://" + origin + ":" + originPort + r.URL.Path)
   if err != nil {
     fmt.Fprintf(w, "Error forwarding request: %v", err)
     return
@@ -34,7 +35,18 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
+var (
+    origin string
+		originPort string
+    proxyPort string
+)
+
 func main() {
+	flag.StringVar(&origin, "origin", "localhost", "Address of the origin server")
+	flag.StringVar(&originPort, "originPort", "8080", "Port for the origin server")
+	flag.StringVar(&proxyPort, "proxyPort", "8081", "Port for the proxy server")
+	flag.Parse()
+
   // Create separate instances of http.ServeMux
   originMux := http.NewServeMux()
   proxyMux := http.NewServeMux()
@@ -44,8 +56,8 @@ func main() {
   proxyMux.HandleFunc("/", proxyHandler)
 
   // Start servers using respective muxes
-  go http.ListenAndServe(":8080", originMux)
-  fmt.Println("Origin server listening on port localhost:8080")
-  fmt.Println("Proxy server listening on port localhost:8081")
-  http.ListenAndServe(":8081", proxyMux)
+  go http.ListenAndServe(":" + originPort, originMux)
+  fmt.Println("Origin server listening on " + origin + originPort)
+  fmt.Println("Proxy server listening on " + origin + proxyPort)
+  http.ListenAndServe(":" + proxyPort, proxyMux)
 }
