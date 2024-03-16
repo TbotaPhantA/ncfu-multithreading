@@ -1611,14 +1611,6 @@ int task27(int argc, char* argv[]) {
     return 0;
 }
 
-#include <iostream>
-#include <WinSock2.h>
-
-#define MAX_CONNECTIONS 510
-#pragma warning(disable : 4996)
-
-
-
 // --------------- MAIN -------------------
 
 int main(int argc, char* argv[])
