@@ -1489,6 +1489,137 @@ void task26() {
     delete q;
 }
 
+// --------------- TASK 27 -------------------
+
+#include <iostream>
+#include <Winsock2.h>
+
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#pragma comment(lib, "ws2_32.lib")
+#define BUFFER_SIZE 30720
+
+using namespace std;
+
+
+int task27(int argc, char* argv[]) {
+    // Проверка аргументов командной строки
+    if (argc != 4) {
+        cerr << "Использование: " << argv[0] << " <порт> <адрес> <порт>" << endl;
+        return 1;
+    }
+
+    // Получение параметров из командной строки
+    int MAX_CONNECTIONS = 510;
+    int proxy_port = atoi(argv[1]);
+    const char* address = argv[2];
+    int server_port = atoi(argv[3]);
+    cout << "proxy_port(" << proxy_port << ")" << endl;
+    cout << "address(" << address << ")" << endl;
+    cout << "server_port(" << server_port << ")" << endl;
+
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        cout << "Could not initialize" << endl;
+    }
+
+    // create a server and proxy sockets
+    SOCKET listen_server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listen_server_socket == INVALID_SOCKET) {
+        cout << "Could not create a socket";
+        closesocket(listen_server_socket);
+        WSACleanup();
+        return 1;
+    }
+
+    // bind sockets to an address
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
+	#pragma warning(suppress : 4996)
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(server_port);
+    int bind_result = ::bind(listen_server_socket, (SOCKADDR*)&server, sizeof(server));
+    if (bind_result != 0) {
+        std::cout << "Could not bind socket";
+        closesocket(listen_server_socket);
+        WSACleanup();
+        return 1;
+    }
+
+    // listen to addresses
+    if (listen(listen_server_socket, MAX_CONNECTIONS) != 0) {
+        cout << "Could not start listening" << endl;
+        closesocket(listen_server_socket);
+        WSACleanup();
+        return 1;
+    }
+    cout << "Listening on server: " << address << ":" << server_port << endl;
+
+    // keep receiving information from the client
+    while (true) {
+        int server_len = sizeof(server);
+        SOCKET server_socket = accept(listen_server_socket, (SOCKADDR*)&server, &server_len);
+        if (server_socket == INVALID_SOCKET) {
+            cout << "could not accept" << WSAGetLastError() << endl;
+        }
+
+		fd_set readfds;
+        while (true) {
+			FD_ZERO(&readfds);
+			FD_SET(server_socket, &readfds);  // Monitor server_socket for readability
+
+			// Wait for data availability or error on server_socket, with a timeout
+			int selectServerResult = select(0, &readfds, nullptr, nullptr, nullptr);
+			if (selectServerResult == SOCKET_ERROR) {
+				std::cerr << "Error in select: " << WSAGetLastError() << std::endl;
+				continue;
+			}
+
+			auto fd_server = FD_ISSET(server_socket, &readfds);
+			if (fd_server) {
+				char buff[BUFFER_SIZE] = { 0 };
+				int bytes = recv(server_socket, buff, BUFFER_SIZE, 0);
+                cout << "Stop waiting for server_socket, bytes: " << bytes << endl;
+				if (bytes < 0) {
+					cout << "Could not read server request" << WSAGetLastError() << endl;
+				}
+				else {
+					string serverMessage = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+					string response = "<html><h1>Hello, world server!</h1></html>";
+					serverMessage.append(std::to_string(response.size()));
+					serverMessage.append("\n\n");
+					serverMessage.append(response);
+					int bytesSent = 0;
+					int totalBytesSent = 0;
+					while (totalBytesSent < serverMessage.size()) {
+						bytesSent = send(server_socket, serverMessage.c_str(), serverMessage.size(), 0);
+						if (bytesSent < 0) {
+							cout << "Could not send response \n";
+						}
+
+						totalBytesSent += bytesSent;
+					}
+				}
+			}
+        }
+
+        closesocket(server_socket);
+    }
+
+	closesocket(listen_server_socket);
+    WSACleanup();
+
+    return 0;
+}
+
+#include <iostream>
+#include <WinSock2.h>
+
+#define MAX_CONNECTIONS 510
+#pragma warning(disable : 4996)
+
+
+
+// --------------- MAIN -------------------
 
 int main(int argc, char* argv[])
 {
@@ -1512,7 +1643,8 @@ int main(int argc, char* argv[])
     // task23();
     // task24();
     // task25();
-    task26();
+    // task26();
+    return task27(argc, argv);
 
     
     return 0;
