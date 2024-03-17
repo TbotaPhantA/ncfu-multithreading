@@ -41,7 +41,7 @@ var (
     proxyPort string
 )
 
-func main() {
+func Task27() {
 	flag.StringVar(&origin, "origin", "localhost", "Address of the origin server")
 	flag.StringVar(&originPort, "originPort", "8080", "Port for the origin server")
 	flag.StringVar(&proxyPort, "proxyPort", "8081", "Port for the proxy server")
