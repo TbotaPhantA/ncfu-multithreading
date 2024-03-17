@@ -46,6 +46,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Cache the response
 	cache[path] = body
 
+	
 	// Write response to client
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
