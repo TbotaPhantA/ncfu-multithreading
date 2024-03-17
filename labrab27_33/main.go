@@ -2,5 +2,6 @@ package main
 
 func main() {
 	// Task27();
-	Task31();
+	// Task31();
+	Task32();
 }
