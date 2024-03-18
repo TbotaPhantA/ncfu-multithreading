@@ -8,14 +8,14 @@ import (
 )
 
 // Simple in-memory cache
-var cache map[string][]byte = make(map[string][]byte)
+var cacheTask33 map[string][]byte = make(map[string][]byte)
 
-func handleRequest(w http.ResponseWriter, r *http.Request, done chan struct{}) {
+func handleRequestTask33(w http.ResponseWriter, r *http.Request, done chan struct{}) {
 	target := "https://google.com/"
 
 	// Check cache for existing response
 	path := r.URL.String()
-	if data, ok := cache[path]; ok {
+	if data, ok := cacheTask33[path]; ok {
 		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 		fmt.Println("Serving from cache:", path)
@@ -48,7 +48,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request, done chan struct{}) {
 	}
 
 	// Cache the response
-	cache[path] = body
+	cacheTask33[path] = body
 
 	// Write response to client
 	w.WriteHeader(resp.StatusCode)
@@ -79,7 +79,7 @@ func Task33() {
 			}()
 
 			done := make(chan struct{})
-			go handleRequest(w, r, done) // Delegate work to the worker
+			go handleRequestTask33(w, r, done) // Delegate work to the worker
 			<-done
 			defer func() {
 					close(doneUpper) // Signal completion
