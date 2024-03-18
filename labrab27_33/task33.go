@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 )
 
@@ -20,7 +22,7 @@ func handleRequestTask33(w http.ResponseWriter, r *http.Request, done chan struc
 		w.Write(data)
 		fmt.Println("Serving from cache:", path)
 		defer func() {
-				close(done) // Signal completion
+			close(done) // Signal completion
 		}()
 		return
 	}
@@ -55,17 +57,27 @@ func handleRequestTask33(w http.ResponseWriter, r *http.Request, done chan struc
 	w.Write(body)
 	fmt.Println("Fetched from Google:", path)
 	defer func() {
-			close(done) // Signal completion
+		close(done) // Signal completion
 	}()
 }
 
+var (
+	threadsStr string
+)
+
 func Task33() {
 	fmt.Println("Starting proxy server on port 8080...")
+	flag.StringVar(&threadsStr, "threads", "4", "number of threads")
+
+	threads, err := strconv.Atoi(threadsStr)
+	if err != nil {
+		panic(err)
+	}
 
 	var wg sync.WaitGroup
 
 	// Create a pool of 4 workers
-	workerPool := make(chan struct{}, 4)
+	workerPool := make(chan struct{}, threads)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		workerPool <- struct{}{} // Acquire a worker slot
@@ -82,7 +94,7 @@ func Task33() {
 			go handleRequestTask33(w, r, done) // Delegate work to the worker
 			<-done
 			defer func() {
-					close(doneUpper) // Signal completion
+				close(doneUpper) // Signal completion
 			}()
 		}(doneUpper)
 		<-doneUpper
