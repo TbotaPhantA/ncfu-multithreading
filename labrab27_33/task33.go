@@ -66,7 +66,7 @@ func handleIncomingRequest(w http.ResponseWriter, r *http.Request) {
 	<-isRequestCompleted
 }
 
-func Task32() {
+func Task33() {
 	fmt.Println("Starting proxy server on port 8080...")
 	http.HandleFunc("/", handleIncomingRequest)
 	http.ListenAndServe(":8080", nil)
