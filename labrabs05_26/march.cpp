@@ -1619,7 +1619,7 @@ int main(int argc, char* argv[])
     SetConsoleOutputCP(1251);
 
     // task6();
-    // task7();
+    task7();
     // task8();
     // task9();
     // task10();
@@ -1636,7 +1636,7 @@ int main(int argc, char* argv[])
     // task24();
     // task25();
     // task26();
-    return task27(argc, argv);
+    // return task27(argc, argv);
 
     
     return 0;
