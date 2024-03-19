@@ -11,7 +11,7 @@ import (
 var cacheResp map[string][]byte = make(map[string][]byte)
 var cacheMutex sync.Mutex
 
-func fetchData(w http.ResponseWriter, path string, isRequestCompleted chan bool) {
+func fetchDataFromGoogle(w http.ResponseWriter, path string, isRequestCompleted chan bool) {
 	target := "https://google.com/"
 
 	client := &http.Client{}
@@ -62,7 +62,7 @@ func handleIncomingRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch from Google in a separate goroutine
 	isRequestCompleted := make(chan bool)
-	go fetchData(w, path, isRequestCompleted)
+	go fetchDataFromGoogle(w, path, isRequestCompleted)
 	<-isRequestCompleted
 }
 

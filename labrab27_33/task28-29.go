@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
 	"github.com/nsf/termbox-go"
 )
 
@@ -48,7 +47,7 @@ func Task28_29() {
 		lines := strings.Split(string(body), "\n")
 		err2 := termbox.Init()
 		if err2 != nil {
-			fmt.Println("Error initializing termbox:", err)
+			fmt.Println("Error initializing termbox:", err2)
 			os.Exit(1)
 		}
 		defer termbox.Close()
