@@ -1489,12 +1489,6 @@ void task26() {
     delete q;
 }
 
-// --------------- TASK 28 -------------------
-
-int task28() {
-    cout << "task 28" << endl;
-}
-
 // --------------- MAIN -------------------
 
 int main(int argc, char* argv[])
@@ -1520,7 +1514,6 @@ int main(int argc, char* argv[])
     // task24();
     // task25();
     // task26();
-    task28();
     
     return 0;
 }
